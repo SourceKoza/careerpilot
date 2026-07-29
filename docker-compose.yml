@@ -1,0 +1,102 @@
+# =========================
+# CareerPilot AI - Docker Compose
+# Local Development Environment
+# =========================
+
+services:
+
+  # --- PostgreSQL ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: careerpilot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-careerpilot}
+      POSTGRES_USER: ${POSTGRES_USER:-careerpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-careerpilot_secret}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - careerpilot-postgres-data:/var/lib/postgresql/data
+    networks:
+      - careerpilot-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-careerpilot} -d ${POSTGRES_DB:-careerpilot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --- Redis ---
+  redis:
+    image: redis:7-alpine
+    container_name: careerpilot-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - careerpilot-redis-data:/data
+    networks:
+      - careerpilot-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # --- MinIO (S3-compatible object storage) ---
+  minio:
+    image: minio/minio:latest
+    container_name: careerpilot-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-careerpilot}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-careerpilot_secret}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - careerpilot-minio-data:/data
+    networks:
+      - careerpilot-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --- Ollama (Local LLM inference) ---
+  ollama:
+    image: ollama/ollama:latest
+    container_name: careerpilot-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - careerpilot-ollama-data:/root/.ollama
+    networks:
+      - careerpilot-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  careerpilot-postgres-data:
+    name: careerpilot-postgres-data
+  careerpilot-redis-data:
+    name: careerpilot-redis-data
+  careerpilot-minio-data:
+    name: careerpilot-minio-data
+  careerpilot-ollama-data:
+    name: careerpilot-ollama-data
+
+networks:
+  careerpilot-network:
+    name: careerpilot-network
+    driver: bridge
