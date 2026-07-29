@@ -105,7 +105,7 @@ Example audit fields:
 
 Do NOT implement:
 
-* Resume module
+* Resume module.  
 * Job module
 * AI Agents
 * MCP
