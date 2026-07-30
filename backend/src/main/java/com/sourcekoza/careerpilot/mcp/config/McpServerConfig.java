@@ -2,6 +2,9 @@ package com.sourcekoza.careerpilot.mcp.config;
 
 import com.sourcekoza.careerpilot.mcp.tools.GreetingTool;
 import com.sourcekoza.careerpilot.mcp.tools.HealthTool;
+import com.sourcekoza.careerpilot.mcp.tools.JobApplicationTool;
+import com.sourcekoza.careerpilot.mcp.tools.JobTool;
+import com.sourcekoza.careerpilot.mcp.tools.ResumeTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -37,10 +40,15 @@ public class McpServerConfig {
      * all {@code @Tool} annotated methods as MCP tools.</p>
      */
     @Bean
-    public ToolCallbackProvider mcpToolCallbackProvider(HealthTool healthTool, GreetingTool greetingTool) {
-        log.info("Registering MCP tools: health, greeting");
+    public ToolCallbackProvider mcpToolCallbackProvider(
+            HealthTool healthTool,
+            GreetingTool greetingTool,
+            ResumeTool resumeTool,
+            JobTool jobTool,
+            JobApplicationTool jobApplicationTool) {
+        log.info("Registering MCP tools: health, greeting, resume, job, jobApplication");
         return MethodToolCallbackProvider.builder()
-                .toolObjects(healthTool, greetingTool)
+                .toolObjects(healthTool, greetingTool, resumeTool, jobTool, jobApplicationTool)
                 .build();
     }
 }
