@@ -166,21 +166,19 @@ class ResumeServiceTest {
     }
 
     @Test
-    @DisplayName("deleteResume - sets deletedAt timestamp and saves")
+    @DisplayName("deleteResume - performs physical delete")
     void deleteResume_success() {
         // Arrange
         Resume resume = Resume.builder().userId(userId).title("To Delete").build();
 
         when(resumeRepository.findByIdAndUserIdAndDeletedAtIsNull(resumeId, userId))
                 .thenReturn(Optional.of(resume));
-        when(resumeRepository.save(resume)).thenReturn(resume);
 
         // Act
         resumeService.deleteResume(userId, resumeId);
 
         // Assert
-        assertThat(resume.getDeletedAt()).isNotNull();
-        verify(resumeRepository).save(resume);
+        verify(resumeRepository).delete(resume);
     }
 
     @Test
@@ -211,9 +209,9 @@ class ResumeServiceTest {
         // Arrange
         Resume resume = Resume.builder().userId(userId).title("Resume").build();
         ResumeVersion version = ResumeVersion.builder()
-                .resume(resume).versionNumber(1).content("{}").build();
+                .resume(resume).versionNumber(1).markdownContent("# Resume").build();
         ResumeVersionResponse versionResponse = new ResumeVersionResponse(
-                UUID.randomUUID(), 1, null, Instant.now());
+                UUID.randomUUID(), resumeId, 1, "# Resume", null, null, Instant.now());
 
         when(resumeRepository.findByIdAndUserIdAndDeletedAtIsNull(resumeId, userId))
                 .thenReturn(Optional.of(resume));

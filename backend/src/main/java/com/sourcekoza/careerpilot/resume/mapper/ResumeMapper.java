@@ -134,5 +134,6 @@ public interface ResumeMapper {
 
     // ===== Version mapping =====
 
+    @Mapping(source = "resume.id", target = "resumeId")
     ResumeVersionResponse toVersionResponse(ResumeVersion version);
 }
