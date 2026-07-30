@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Rocket } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { ROUTES, APP_NAME } from "@/lib/constants";
+import { AnimatedLogo } from "@/components/shared/animated-logo";
+import { ROUTES } from "@/lib/constants";
 
 const navLinks = [
   { href: "#features", label: "Features" },
@@ -21,12 +22,7 @@ export function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href={ROUTES.HOME} className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Rocket className="h-4 w-4 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-bold">{APP_NAME}</span>
-        </Link>
+        <AnimatedLogo />
 
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
