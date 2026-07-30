@@ -13,9 +13,12 @@ import jakarta.persistence.Table;
 /**
  * Immutable version snapshot of a Resume.
  *
- * <p>Stores the full resume state as a JSONB column at the time of update.
- * Versions are historical records and are never modified or deleted through
- * normal operations.</p>
+ * <p>Each version stores the resume content as Markdown text at a specific
+ * point in time. Versions are historical records and are never modified
+ * or deleted through normal operations.</p>
+ *
+ * <p>Every future Job Application references a ResumeVersion rather than
+ * the Resume itself, preserving the exact state used during application.</p>
  */
 @Entity
 @Table(name = "resume_versions", indexes = {
@@ -31,8 +34,11 @@ public class ResumeVersion extends BaseEntity {
     @Column(name = "version_number", nullable = false)
     private Integer versionNumber;
 
-    @Column(columnDefinition = "jsonb", nullable = false)
-    private String content;
+    @Column(name = "markdown_content", columnDefinition = "TEXT", nullable = false)
+    private String markdownContent;
+
+    @Column(name = "pdf_path", length = 500)
+    private String pdfPath;
 
     @Column(name = "change_summary", length = 500)
     private String changeSummary;
@@ -44,7 +50,8 @@ public class ResumeVersion extends BaseEntity {
     private ResumeVersion(Builder builder) {
         this.resume = builder.resume;
         this.versionNumber = builder.versionNumber;
-        this.content = builder.content;
+        this.markdownContent = builder.markdownContent;
+        this.pdfPath = builder.pdfPath;
         this.changeSummary = builder.changeSummary;
     }
 
@@ -60,8 +67,12 @@ public class ResumeVersion extends BaseEntity {
         return versionNumber;
     }
 
-    public String getContent() {
-        return content;
+    public String getMarkdownContent() {
+        return markdownContent;
+    }
+
+    public String getPdfPath() {
+        return pdfPath;
     }
 
     public String getChangeSummary() {
@@ -75,7 +86,8 @@ public class ResumeVersion extends BaseEntity {
     public static class Builder {
         private Resume resume;
         private Integer versionNumber;
-        private String content;
+        private String markdownContent;
+        private String pdfPath;
         private String changeSummary;
 
         public Builder resume(Resume resume) {
@@ -88,8 +100,13 @@ public class ResumeVersion extends BaseEntity {
             return this;
         }
 
-        public Builder content(String content) {
-            this.content = content;
+        public Builder markdownContent(String markdownContent) {
+            this.markdownContent = markdownContent;
+            return this;
+        }
+
+        public Builder pdfPath(String pdfPath) {
+            this.pdfPath = pdfPath;
             return this;
         }
 
