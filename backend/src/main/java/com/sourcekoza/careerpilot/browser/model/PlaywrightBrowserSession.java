@@ -1,6 +1,7 @@
 package com.sourcekoza.careerpilot.browser.model;
 
 import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
@@ -8,14 +9,18 @@ import com.sourcekoza.careerpilot.browser.exception.BrowserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Playwright-based implementation of {@link BrowserSession}.
  *
- * <p>Manages the lifecycle of a single Playwright browser instance.
- * This class is package-private to the browser module — consumers
- * interact only through the {@link BrowserSession} interface.</p>
+ * <p>Manages the lifecycle of a single Playwright browser instance and
+ * provides DOM inspection capabilities through the {@link BrowserElement}
+ * abstraction. All Playwright-specific types (Locator, Page, etc.) remain
+ * internal to this class — consumers interact only through the
+ * {@link BrowserSession} and {@link BrowserElement} interfaces.</p>
  *
  * @since Sprint-13
  */
@@ -104,6 +109,54 @@ public class PlaywrightBrowserSession implements BrowserSession {
     @Override
     public boolean isActive() {
         return active;
+    }
+
+    @Override
+    public BrowserElement querySelector(String selector) {
+        ensureActive();
+        try {
+            log.debug("Session {} querySelector: {}", sessionId, selector);
+            Locator locator = page.locator(selector).first();
+            if (locator.count() == 0) {
+                return null;
+            }
+            return new PlaywrightBrowserElement(locator);
+        } catch (PlaywrightException ex) {
+            throw new BrowserException(
+                    "querySelector failed for '" + selector + "': " + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public List<BrowserElement> querySelectorAll(String selector) {
+        ensureActive();
+        try {
+            log.debug("Session {} querySelectorAll: {}", sessionId, selector);
+            Locator locator = page.locator(selector);
+            int count = locator.count();
+            List<BrowserElement> elements = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                elements.add(new PlaywrightBrowserElement(locator.nth(i)));
+            }
+            log.debug("Session {} querySelectorAll: found {} elements for '{}'",
+                    sessionId, count, selector);
+            return elements;
+        } catch (PlaywrightException ex) {
+            throw new BrowserException(
+                    "querySelectorAll failed for '" + selector + "': " + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public boolean exists(String selector) {
+        ensureActive();
+        try {
+            return page.locator(selector).count() > 0;
+        } catch (PlaywrightException ex) {
+            log.debug("Session {} exists check failed for '{}': {}",
+                    sessionId, selector, ex.getMessage());
+            return false;
+        }
     }
 
     @Override

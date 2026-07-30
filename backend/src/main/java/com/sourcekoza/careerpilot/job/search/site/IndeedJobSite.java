@@ -1,11 +1,16 @@
 package com.sourcekoza.careerpilot.job.search.site;
 
+import com.sourcekoza.careerpilot.browser.model.BrowserSession;
+import com.sourcekoza.careerpilot.job.search.model.JobSearchCriteria;
+import com.sourcekoza.careerpilot.job.search.model.JobSearchResult;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Indeed job site strategy implementation.
  *
- * <p>TODO: Implement Indeed-specific search logic in a future sprint.</p>
+ * <p>Placeholder — search logic will be implemented in a future sprint.</p>
  *
  * @since Sprint-13
  */
@@ -27,7 +32,11 @@ public class IndeedJobSite implements JobSite {
 
     @Override
     public boolean isEnabled() {
-        // TODO: Enable when Indeed search logic is implemented
         return false;
+    }
+
+    @Override
+    public List<JobSearchResult> search(BrowserSession session, JobSearchCriteria criteria) {
+        throw new UnsupportedOperationException("Indeed search is not yet implemented");
     }
 }

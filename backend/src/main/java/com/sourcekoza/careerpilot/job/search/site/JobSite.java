@@ -1,6 +1,10 @@
 package com.sourcekoza.careerpilot.job.search.site;
 
 import com.sourcekoza.careerpilot.browser.model.BrowserSession;
+import com.sourcekoza.careerpilot.job.search.model.JobSearchCriteria;
+import com.sourcekoza.careerpilot.job.search.model.JobSearchResult;
+
+import java.util.List;
 
 /**
  * Strategy interface representing a job portal site.
@@ -14,9 +18,9 @@ import com.sourcekoza.careerpilot.browser.model.BrowserSession;
  * <pre>
  * JobSearchAgent
  *       ↓
- * JobSite (e.g. LinkedInJobSite)
+ * JobSiteManager
  *       ↓
- * BrowserAutomationService
+ * JobSite (e.g. LinkedInJobSite)
  *       ↓
  * BrowserSession
  *       ↓
@@ -54,4 +58,18 @@ public interface JobSite {
      * @return true if this site can perform searches
      */
     boolean isEnabled();
+
+    /**
+     * Executes a job search on this site using the provided browser session.
+     *
+     * <p>The implementation is responsible for navigating the site, entering
+     * search criteria, and extracting job listings from the results page.
+     * All results must be normalized into {@link JobSearchResult} objects.</p>
+     *
+     * @param session  an active browser session to use for interaction
+     * @param criteria the search criteria
+     * @return a list of normalized job search results
+     * @since Sprint-14
+     */
+    List<JobSearchResult> search(BrowserSession session, JobSearchCriteria criteria);
 }
