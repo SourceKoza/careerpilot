@@ -3,6 +3,7 @@
 import { AuthGuard } from "@/features/auth/components/auth-guard";
 import { DashboardSidebar } from "@/features/dashboard/components/sidebar";
 import { DashboardTopbar } from "@/features/dashboard/components/topbar";
+import { PageTransition } from "@/components/shared/page-transition";
 
 export default function DashboardLayout({
   children,
@@ -15,7 +16,9 @@ export default function DashboardLayout({
         <DashboardSidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <DashboardTopbar />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto p-6">
+            <PageTransition>{children}</PageTransition>
+          </main>
         </div>
       </div>
     </AuthGuard>

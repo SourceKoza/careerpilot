@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Rocket } from "lucide-react";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { PageTransition } from "@/components/shared/page-transition";
 
 export default function AuthLayout({
   children,
@@ -18,16 +22,33 @@ export default function AuthLayout({
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href={ROUTES.HOME} className="inline-flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <motion.div
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            >
               <Rocket className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">{APP_NAME}</span>
+            </motion.div>
+            <motion.span
+              className="text-xl font-bold"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {APP_NAME}
+            </motion.span>
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl p-8 shadow-xl">
-          {children}
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.4 }}
+          className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl p-8 shadow-xl"
+        >
+          <PageTransition>{children}</PageTransition>
+        </motion.div>
       </div>
     </div>
   );

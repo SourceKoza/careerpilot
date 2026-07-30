@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { UserMenu } from "./user-menu";
 import { MobileSidebar } from "./mobile-sidebar";
+import { NotificationsDropdown } from "./notifications-dropdown";
+import { CommandPalette } from "./command-palette";
 
 function getBreadcrumbs(pathname: string): string[] {
   const parts = pathname.split("/").filter(Boolean);
@@ -39,11 +40,9 @@ export function DashboardTopbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        <CommandPalette />
         <ThemeToggle />
-        <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" />
-        </Button>
+        <NotificationsDropdown />
         <UserMenu />
       </div>
     </header>
