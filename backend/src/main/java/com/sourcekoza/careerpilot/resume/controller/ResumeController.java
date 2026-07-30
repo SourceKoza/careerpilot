@@ -7,7 +7,6 @@ import com.sourcekoza.careerpilot.common.PageResponse;
 import com.sourcekoza.careerpilot.resume.dto.CreateResumeRequest;
 import com.sourcekoza.careerpilot.resume.dto.ResumeResponse;
 import com.sourcekoza.careerpilot.resume.dto.ResumeSummaryResponse;
-import com.sourcekoza.careerpilot.resume.dto.ResumeVersionResponse;
 import com.sourcekoza.careerpilot.resume.dto.UpdateResumeRequest;
 import com.sourcekoza.careerpilot.resume.service.ResumeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +30,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -75,7 +73,7 @@ public class ResumeController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a resume",
-            description = "Updates an existing resume. Creates a version snapshot before applying changes.")
+            description = "Updates resume metadata. Does not modify existing resume versions.")
     public ApiResponse<ResumeResponse> updateResume(@PathVariable UUID id,
                                                      @Valid @RequestBody UpdateResumeRequest request) {
         UUID userId = getAuthenticatedUserId();
@@ -86,7 +84,7 @@ public class ResumeController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete a resume",
-            description = "Soft-deletes a resume (sets deletedAt timestamp)")
+            description = "Deletes a resume and all associated versions")
     public void deleteResume(@PathVariable UUID id) {
         UUID userId = getAuthenticatedUserId();
         resumeService.deleteResume(userId, id);
@@ -101,15 +99,6 @@ public class ResumeController {
         UUID userId = getAuthenticatedUserId();
         Page<ResumeSummaryResponse> resumes = resumeService.listResumes(userId, PageRequest.of(page, size));
         return ApiResponse.success(PageResponse.from(resumes));
-    }
-
-    @GetMapping("/{id}/versions")
-    @Operation(summary = "Get resume versions",
-            description = "Returns the version history for a resume")
-    public ApiResponse<List<ResumeVersionResponse>> getVersions(@PathVariable UUID id) {
-        UUID userId = getAuthenticatedUserId();
-        List<ResumeVersionResponse> versions = resumeService.getVersions(userId, id);
-        return ApiResponse.success(versions);
     }
 
     /**

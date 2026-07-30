@@ -17,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -116,7 +115,9 @@ public class ResumeService {
     }
 
     /**
-     * Soft-deletes a resume by setting the deletedAt timestamp.
+     * Deletes a resume and all associated versions.
+     *
+     * <p>Sprint-06 specifies physical delete is acceptable.</p>
      *
      * @param userId   the authenticated user's ID
      * @param resumeId the resume ID to delete
@@ -125,8 +126,7 @@ public class ResumeService {
     @Transactional
     public void deleteResume(UUID userId, UUID resumeId) {
         Resume resume = findResumeOrThrow(userId, resumeId);
-        resume.setDeletedAt(Instant.now());
-        resumeRepository.save(resume);
+        resumeRepository.delete(resume);
     }
 
     /**
@@ -168,7 +168,8 @@ public class ResumeService {
             ResumeVersion version = ResumeVersion.builder()
                     .resume(resume)
                     .versionNumber((int) (versionCount + 1))
-                    .content(content)
+                    .markdownContent(content)
+                    .changeSummary("Auto-snapshot before update")
                     .build();
             resumeVersionRepository.save(version);
         } catch (Exception e) {
