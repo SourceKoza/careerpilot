@@ -13,6 +13,7 @@ import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionEventReposi
 import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionExecutionLogRepository;
 import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionExecutionRepository;
 import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionRepository;
+import com.sourcekoza.careerpilot.jobagent.mission.service.AutoApplyPipeline;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,8 @@ class MissionOrchestratorTest {
     private ApplicationEventPublisher eventPublisher;
     @Mock
     private MissionAgent jobSearchAgent;
+    @Mock
+    private AutoApplyPipeline autoApplyPipeline;
 
     private MissionOrchestrator orchestrator;
 
@@ -55,7 +58,7 @@ class MissionOrchestratorTest {
         when(jobSearchAgent.getType()).thenReturn(AgentType.JOB_SEARCH);
         orchestrator = new MissionOrchestrator(
                 List.of(jobSearchAgent), missionRepository, executionRepository,
-                eventRepository, logRepository, eventPublisher);
+                eventRepository, logRepository, eventPublisher, autoApplyPipeline);
     }
 
     @Test

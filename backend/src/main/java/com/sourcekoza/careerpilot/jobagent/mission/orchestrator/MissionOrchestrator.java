@@ -19,6 +19,7 @@ import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionEventReposi
 import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionExecutionLogRepository;
 import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionExecutionRepository;
 import com.sourcekoza.careerpilot.jobagent.mission.repository.MissionRepository;
+import com.sourcekoza.careerpilot.jobagent.mission.service.AutoApplyPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,8 +36,12 @@ import java.util.stream.Collectors;
 /**
  * Mission Orchestrator — coordinates mission execution pipeline.
  *
- * <p>Future agents plug in through the MissionAgent interface without
- * modifying this orchestrator's code.</p>
+ * <p>Pipeline flow (Sprint 16):</p>
+ * <ol>
+ *   <li>Job Search Agent — discovers and scores jobs</li>
+ *   <li>Resume Tailoring Agent — tailors resumes for eligible jobs</li>
+ *   <li>Auto-Apply Pipeline — handles approval/sending based on mode</li>
+ * </ol>
  *
  * @since Sprint-15
  */
@@ -51,13 +56,15 @@ public class MissionOrchestrator {
     private final MissionEventRepository eventRepository;
     private final MissionExecutionLogRepository logRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AutoApplyPipeline autoApplyPipeline;
 
     public MissionOrchestrator(List<MissionAgent> agents,
                                 MissionRepository missionRepository,
                                 MissionExecutionRepository executionRepository,
                                 MissionEventRepository eventRepository,
                                 MissionExecutionLogRepository logRepository,
-                                ApplicationEventPublisher eventPublisher) {
+                                ApplicationEventPublisher eventPublisher,
+                                AutoApplyPipeline autoApplyPipeline) {
         this.agentRegistry = agents.stream()
                 .collect(Collectors.toMap(MissionAgent::getType, Function.identity()));
         this.missionRepository = missionRepository;
@@ -65,6 +72,7 @@ public class MissionOrchestrator {
         this.eventRepository = eventRepository;
         this.logRepository = logRepository;
         this.eventPublisher = eventPublisher;
+        this.autoApplyPipeline = autoApplyPipeline;
         log.info("MissionOrchestrator initialized with {} agents: {}",
                 agentRegistry.size(), agentRegistry.keySet());
     }
@@ -87,6 +95,7 @@ public class MissionOrchestrator {
         eventPublisher.publishEvent(new MissionStartedEvent(mission.getId(), executionId, mission.getUserId()));
 
         try {
+            // Step 1: Job Search
             persistEvent(mission, executionId, MissionEventType.SEARCH_STARTED, "Job search starting");
             persistLog(mission, executionId, LogLevel.INFO, "Searching job platforms...");
 
@@ -109,6 +118,21 @@ public class MissionOrchestrator {
 
                 eventPublisher.publishEvent(new JobsDiscoveredEvent(
                         mission.getId(), executionId, result.jobsFound()));
+
+                // Step 2: Resume Tailoring + Auto-Apply Pipeline
+                if (result.jobsFound() > 0) {
+                    persistLog(mission, executionId, LogLevel.INFO, "Starting resume tailoring pipeline...");
+                    try {
+                        int processed = autoApplyPipeline.runPipeline(mission, mission.getUserId());
+                        persistLog(mission, executionId, LogLevel.INFO,
+                                String.format("%d resumes tailored (mode: %s)", processed, mission.getApplyMode()));
+                    } catch (Exception e) {
+                        // Tailoring failure should not fail the mission
+                        log.warn("Auto-apply pipeline error (non-fatal): {}", e.getMessage());
+                        persistLog(mission, executionId, LogLevel.WARN,
+                                "Resume tailoring partially failed: " + e.getMessage());
+                    }
+                }
 
                 execution.markCompleted(result.jobsFound(), result.contactsFound());
                 executionRepository.save(execution);

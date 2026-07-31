@@ -13,6 +13,8 @@ import {
   Clock,
   CheckCircle2,
   Loader2,
+  Zap,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +30,7 @@ const PLATFORMS = [
   { id: "Company Sites", label: "Company Sites", color: "bg-pink-500" },
 ];
 
-const STEPS = ["Details", "Location", "Salary", "Platforms", "Resume", "Schedule", "Review"];
+const STEPS = ["Details", "Location", "Salary", "Platforms", "Resume", "Schedule", "Apply Mode", "Review"];
 
 interface MissionWizardProps {
   onClose: () => void;
@@ -52,6 +54,7 @@ export function MissionWizard({ onClose }: MissionWizardProps) {
     resumeId: null,
     schedule: "Daily",
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    applyMode: "SEMI_AUTO",
   });
 
   const update = (partial: Partial<CreateMissionData>) => setData({ ...data, ...partial });
@@ -288,6 +291,44 @@ export function MissionWizard({ onClose }: MissionWizardProps) {
               {step === 6 && (
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 mb-4">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">Apply Mode</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Choose how the AI handles job applications.</p>
+                  <div className="space-y-3 mt-4">
+                    <button
+                      onClick={() => update({ applyMode: "SEMI_AUTO" })}
+                      className={`w-full flex items-start gap-3 rounded-xl border p-4 transition-all text-left ${data.applyMode === "SEMI_AUTO" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                    >
+                      <Shield className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Semi-Automatic</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          AI tailors resumes, you review and approve before sending. Full control over every application.
+                        </p>
+                      </div>
+                      {data.applyMode === "SEMI_AUTO" && <CheckCircle2 className="h-4 w-4 text-primary ml-auto mt-0.5" />}
+                    </button>
+                    <button
+                      onClick={() => update({ applyMode: "FULL_AUTO" })}
+                      className={`w-full flex items-start gap-3 rounded-xl border p-4 transition-all text-left ${data.applyMode === "FULL_AUTO" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                    >
+                      <Zap className="h-5 w-5 text-orange-500 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Full Automatic</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          AI sends applications automatically for jobs scoring ≥ 80%. No approval needed.
+                        </p>
+                      </div>
+                      {data.applyMode === "FULL_AUTO" && <CheckCircle2 className="h-4 w-4 text-primary ml-auto mt-0.5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 7 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
                     <CheckCircle2 className="h-5 w-5 text-primary" />
                     <h3 className="font-semibold">Review Mission</h3>
                   </div>
@@ -300,6 +341,7 @@ export function MissionWizard({ onClose }: MissionWizardProps) {
                     <div className="flex justify-between"><span className="text-muted-foreground">Salary</span><span className="font-medium">{data.salaryMin ? `${data.currency} ${data.salaryMin.toLocaleString()}+` : "Any"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">Platforms</span><span className="font-medium">{data.platforms.join(", ")}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">Schedule</span><span className="font-medium">{data.schedule}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Apply Mode</span><span className="font-medium">{data.applyMode === "FULL_AUTO" ? "Full Auto" : "Semi Auto"}</span></div>
                   </div>
                 </div>
               )}

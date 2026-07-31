@@ -68,6 +68,9 @@ public class DiscoveredJob extends BaseEntity {
     @Column(name = "match_reason", length = 500)
     private String matchReason;
 
+    @Column(name = "tailored_resume_id")
+    private UUID tailoredResumeId;
+
     public DiscoveredJob() {
     }
 
@@ -173,5 +176,13 @@ public class DiscoveredJob extends BaseEntity {
 
     public void setMatchReason(String matchReason) {
         this.matchReason = matchReason;
+    }
+
+    public UUID getTailoredResumeId() {
+        return tailoredResumeId;
+    }
+
+    public void setTailoredResumeId(UUID tailoredResumeId) {
+        this.tailoredResumeId = tailoredResumeId;
     }
 }

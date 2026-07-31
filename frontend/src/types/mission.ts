@@ -1,5 +1,7 @@
 export type MissionStatus = "active" | "paused" | "completed" | "failed" | "scheduled";
 
+export type ApplyMode = "SEMI_AUTO" | "FULL_AUTO";
+
 export interface Mission {
   id: string;
   name: string;
@@ -18,6 +20,7 @@ export interface Mission {
   resumeTitle: string | null;
   schedule: string;
   timezone: string;
+  applyMode: ApplyMode;
   createdAt: string;
   lastRun: string | null;
   nextRun: string | null;
@@ -54,4 +57,22 @@ export interface CreateMissionData {
   resumeId: string | null;
   schedule: string;
   timezone: string;
+  applyMode: ApplyMode;
+}
+
+export interface TailoredResume {
+  id: string;
+  missionId: string;
+  jobId: string;
+  summary: string | null;
+  skillsJson: string | null;
+  experienceJson: string | null;
+  educationJson: string | null;
+  tailoredScore: number | null;
+  originalScore: number | null;
+  status: "DRAFT" | "APPROVED" | "SENT" | "REJECTED";
+  feedback: string | null;
+  filePath: string | null;
+  createdAt: string;
+  updatedAt: string;
 }

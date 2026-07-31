@@ -7,6 +7,7 @@ import com.sourcekoza.careerpilot.jobagent.mission.dto.MissionExecutionResponse;
 import com.sourcekoza.careerpilot.jobagent.mission.dto.MissionLogResponse;
 import com.sourcekoza.careerpilot.jobagent.mission.dto.MissionResponse;
 import com.sourcekoza.careerpilot.jobagent.mission.entity.Mission;
+import com.sourcekoza.careerpilot.jobagent.mission.entity.ApplyMode;
 import com.sourcekoza.careerpilot.jobagent.mission.entity.MissionEvent;
 import com.sourcekoza.careerpilot.jobagent.mission.entity.MissionExecution;
 import com.sourcekoza.careerpilot.jobagent.mission.entity.MissionExecutionLog;
@@ -41,6 +42,13 @@ public class MissionMapper {
         mission.setResumeId(parseUuid(request.resumeId()));
         mission.setSchedule(request.schedule());
         mission.setTimezone(request.timezone());
+        if (request.applyMode() != null) {
+            try {
+                mission.setApplyMode(ApplyMode.valueOf(request.applyMode()));
+            } catch (IllegalArgumentException e) {
+                // Default stays SEMI_AUTO
+            }
+        }
         return mission;
     }
 
@@ -63,6 +71,7 @@ public class MissionMapper {
                 mission.getSchedule(),
                 mission.getTimezone(),
                 mission.getStatus(),
+                mission.getApplyMode().name(),
                 mission.getCreatedAt(),
                 mission.getUpdatedAt()
         );
@@ -119,6 +128,7 @@ public class MissionMapper {
                 job.getJobStatus(),
                 job.getMatchScore(),
                 job.getMatchReason(),
+                job.getTailoredResumeId(),
                 job.getCreatedAt()
         );
     }

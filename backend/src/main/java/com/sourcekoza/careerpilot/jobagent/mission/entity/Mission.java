@@ -75,6 +75,10 @@ public class Mission extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MissionStatus status = MissionStatus.CREATED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "apply_mode", nullable = false, length = 20)
+    private ApplyMode applyMode = ApplyMode.SEMI_AUTO;
+
     public Mission() {
     }
 
@@ -204,5 +208,13 @@ public class Mission extends BaseEntity {
 
     public void setStatus(MissionStatus status) {
         this.status = status;
+    }
+
+    public ApplyMode getApplyMode() {
+        return applyMode;
+    }
+
+    public void setApplyMode(ApplyMode applyMode) {
+        this.applyMode = applyMode;
     }
 }

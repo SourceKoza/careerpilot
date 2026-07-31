@@ -31,6 +31,7 @@ public record MissionCreateRequest(
         List<String> platforms,
         String resumeId,
         String schedule,
-        String timezone
+        String timezone,
+        String applyMode
 ) {
 }
