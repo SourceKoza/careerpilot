@@ -1,21 +1,20 @@
 # =========================
-# CareerPilot AI - Local Development Profile
+# CareerPilot AI - Local Development Profile (PostgreSQL)
 # =========================
 
 spring:
   datasource:
-    url: jdbc:h2:mem:careerpilot;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: jdbc:postgresql://localhost:5433/careerpilot
+    username: careerpilot
+    password: careerpilot_secret
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   devtools:
     restart:
       enabled: true
@@ -25,6 +24,33 @@ logging:
     com.sourcekoza.careerpilot: DEBUG
     org.springframework.web: INFO
     org.springframework.security: DEBUG
+
+# Ollama (Local LLM)
+spring.ai:
+  ollama:
+    base-url: http://localhost:11434
+    chat:
+      model: qwen2.5:7b
+      options:
+        temperature: 0.3
+        num-predict: 2048
+
+# Email (SMTP) - configure with your Gmail app password or any SMTP
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enabled: true
+
+app.email:
+  from: ${MAIL_FROM:careerpilot@sourcekoza.com}
+  enabled: ${EMAIL_ENABLED:false}
 
 # Actuator - more permissive for local dev
 management:

@@ -12,7 +12,8 @@ import { MissingSkillsCard } from "./missing-skills-card";
 import { KeywordMatchCard } from "./keyword-match-card";
 import { AISuggestionsCard } from "./ai-suggestions-card";
 import { ResumeVersions } from "./resume-versions";
-import { useResume, useResumeAnalysis, useResumeVersions } from "../hooks/use-resume";
+import { useResume, useAnalyzeResume, useResumeVersions } from "../hooks/use-resume";
+import { useQueryClient } from "@tanstack/react-query";
 
 function formatSize(bytes: number): string {
   return bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(0)} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -24,9 +25,14 @@ function formatDate(dateStr: string): string {
 
 export function ResumeIntelligencePage() {
   const { data: resume, isLoading: resumeLoading } = useResume();
-  const { data: analysis, isLoading: analysisLoading } = useResumeAnalysis();
+  const queryClient = useQueryClient();
+  const cachedAnalysis = queryClient.getQueryData<import("../types").ResumeAnalysis>(["resume-analysis"]);
+  const analyzeMutation = useAnalyzeResume();
   const { data: versions, isLoading: versionsLoading } = useResumeVersions();
   const [showUploader, setShowUploader] = useState(false);
+
+  const analysis = cachedAnalysis || analyzeMutation.data;
+  const analysisLoading = analyzeMutation.isPending;
 
   if (resumeLoading) {
     return (
@@ -110,10 +116,11 @@ export function ResumeIntelligencePage() {
 
       {/* Analysis Grid */}
       {analysisLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
-          <Skeleton className="h-64" />
+        <div className="flex items-center justify-center py-12 text-center">
+          <div className="space-y-3">
+            <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
+            <p className="text-sm text-muted-foreground">Analyzing your resume with AI... (may take 10-15s)</p>
+          </div>
         </div>
       ) : analysis ? (
         <>
@@ -130,13 +137,24 @@ export function ResumeIntelligencePage() {
               <ResumeVersions versions={versions} />
             ) : null}
           </div>
+          <div className="flex justify-center pt-2">
+            <Button variant="outline" size="sm" onClick={() => analyzeMutation.mutate()} disabled={analyzeMutation.isPending}>
+              <Brain className="h-4 w-4" />
+              Re-analyze Resume
+            </Button>
+          </div>
         </>
       ) : (
-        <div className="flex items-center justify-center py-12 text-center">
-          <div className="space-y-3">
-            <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto" />
-            <p className="text-sm text-muted-foreground">Analyzing your resume...</p>
+        <div className="flex flex-col items-center justify-center py-12 text-center gap-4">
+          <Brain className="h-12 w-12 text-muted-foreground" />
+          <div className="space-y-1">
+            <p className="font-medium">Resume not yet analyzed</p>
+            <p className="text-sm text-muted-foreground">Click below to run AI analysis (ATS score, skill gaps, suggestions)</p>
           </div>
+          <Button onClick={() => analyzeMutation.mutate()} disabled={analyzeMutation.isPending}>
+            {analyzeMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+            Analyze with AI
+          </Button>
         </div>
       )}
     </div>
