@@ -36,6 +36,7 @@ interface BackendMission {
   schedule: string | null;
   timezone: string | null;
   status: string;
+  applyMode: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -100,6 +101,7 @@ function mapMission(b: BackendMission): Mission {
     resumeTitle: null,
     schedule: b.schedule || "",
     timezone: b.timezone || "UTC",
+    applyMode: (b.applyMode as Mission["applyMode"]) || "SEMI_AUTO",
     createdAt: b.createdAt,
     lastRun: b.updatedAt,
     nextRun: null,

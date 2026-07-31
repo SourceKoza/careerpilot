@@ -1,11 +1,17 @@
 package com.sourcekoza.careerpilot.jobagent.agents.email;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
 
 /**
  * Service for sending emails via SMTP.
@@ -58,6 +64,49 @@ public class EmailService {
             return true;
         } catch (Exception e) {
             log.error("Failed to send email: to='{}', error='{}'", to, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Sends an email with a file attachment. If email is disabled, logs it instead.
+     *
+     * @param to recipient email
+     * @param subject email subject
+     * @param body email body text
+     * @param attachmentPath path to the file to attach
+     * @param attachmentName name for the attachment in the email
+     * @return true if sent/logged successfully
+     * @since Sprint-16
+     */
+    public boolean sendEmailWithAttachment(String to, String subject, String body,
+                                            String attachmentPath, String attachmentName) {
+        if (!emailEnabled) {
+            log.info("📧 [DRY RUN] Email with attachment NOT sent (email.enabled=false)");
+            log.info("  To: {}", to);
+            log.info("  Subject: {}", subject);
+            log.info("  Attachment: {} ({})", attachmentName, attachmentPath);
+            log.info("  Body:\n{}", body);
+            return true;
+        }
+
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            helper.setFrom(fromAddress);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body);
+
+            FileSystemResource file = new FileSystemResource(new File(attachmentPath));
+            helper.addAttachment(attachmentName, file);
+
+            mailSender.send(mimeMessage);
+            log.info("Email with attachment sent: to='{}', subject='{}', attachment='{}'",
+                    to, subject, attachmentName);
+            return true;
+        } catch (MessagingException e) {
+            log.error("Failed to send email with attachment: to='{}', error='{}'", to, e.getMessage());
             return false;
         }
     }

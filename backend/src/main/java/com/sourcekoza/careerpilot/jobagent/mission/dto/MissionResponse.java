@@ -29,6 +29,7 @@ public record MissionResponse(
         String schedule,
         String timezone,
         MissionStatus status,
+        String applyMode,
         Instant createdAt,
         Instant updatedAt
 ) {

@@ -8,6 +8,7 @@ package com.sourcekoza.careerpilot.jobagent.agents.core;
 public enum AgentType {
     JOB_SEARCH,
     RESUME_PREPARATION,
+    RESUME_TAILORING,
     EMAIL_OUTREACH,
     BROWSER_AUTOMATION,
     CONTACT_DISCOVERY,

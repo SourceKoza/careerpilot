@@ -96,13 +96,13 @@ class MissionControllerTest {
         MissionCreateRequest request = new MissionCreateRequest(
                 "Test Mission", "Java Spring Boot", "Senior Engineer", "Senior",
                 "Remote", true, false, 150000, "USD", "Full-time",
-                List.of("LinkedIn", "Indeed"), null, "Daily", "UTC");
+                List.of("LinkedIn", "Indeed"), null, "Daily", "UTC", null);
 
         MissionResponse response = new MissionResponse(
                 missionId, userId, "Test Mission", "Java Spring Boot", "Senior Engineer",
                 "Senior", "Remote", true, false, 150000, "USD", "Full-time",
                 List.of("LinkedIn", "Indeed"), null, "Daily", "UTC",
-                MissionStatus.CREATED, Instant.now(), Instant.now());
+                MissionStatus.CREATED, "SEMI_AUTO", Instant.now(), Instant.now());
 
         when(missionService.createMission(any(UUID.class), any(MissionCreateRequest.class)))
                 .thenReturn(response);
@@ -123,7 +123,7 @@ class MissionControllerTest {
                 missionId, userId, "Test Mission", "Java", null, null,
                 "Remote", true, false, null, null, null,
                 List.of(), null, null, null,
-                MissionStatus.CREATED, Instant.now(), Instant.now());
+                MissionStatus.CREATED, "SEMI_AUTO", Instant.now(), Instant.now());
 
         when(missionService.getMission(any(UUID.class), eq(missionId))).thenReturn(response);
 

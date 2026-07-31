@@ -25,6 +25,7 @@ public record DiscoveredJobResponse(
         DiscoveredJobStatus jobStatus,
         Integer matchScore,
         String matchReason,
+        UUID tailoredResumeId,
         Instant createdAt
 ) {
 }
