@@ -13,6 +13,7 @@ import {
   Rocket,
   ChevronsLeft,
   ChevronsRight,
+  Wand2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -28,6 +29,7 @@ const navItems = [
   { href: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
   { href: ROUTES.JOBS, icon: Briefcase, label: "Jobs" },
   { href: ROUTES.RESUME, icon: FileText, label: "Resume" },
+  { href: ROUTES.RESUME_TAILORING, icon: Wand2, label: "Resume Tailoring" },
   { href: ROUTES.APPLICATIONS, icon: Send, label: "Applications" },
   { href: ROUTES.AGENTS, icon: Bot, label: "AI Agents" },
   { href: ROUTES.SETTINGS, icon: Settings, label: "Settings" },
