@@ -37,11 +37,27 @@ public class JwtService {
      * @return signed JWT token string
      */
     public String generateToken(String email) {
+        return generateToken(email, "ROLE_USER", "", "");
+    }
+
+    /**
+     * Generates a JWT token with user details in claims.
+     *
+     * @param email the user's email
+     * @param role the user's role
+     * @param firstName the user's first name
+     * @param lastName the user's last name
+     * @return signed JWT token string
+     */
+    public String generateToken(String email, String role, String firstName, String lastName) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .subject(email)
+                .claim("role", role)
+                .claim("firstName", firstName)
+                .claim("lastName", lastName)
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(secretKey)

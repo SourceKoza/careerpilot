@@ -32,6 +32,9 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 20)
     private Role role;
 
+    @Column(nullable = false)
+    private boolean enabled = true;
+
     protected User() {
         // JPA requires a no-arg constructor
     }
@@ -62,6 +65,18 @@ public class User extends BaseEntity {
 
     public Role getRole() {
         return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public static Builder builder() {

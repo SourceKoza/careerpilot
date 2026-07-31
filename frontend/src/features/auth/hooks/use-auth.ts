@@ -15,9 +15,10 @@ function decodeUserFromToken(token: string): User {
       email: decoded.sub || decoded.email || "",
       firstName: decoded.firstName || "",
       lastName: decoded.lastName || "",
+      role: decoded.role || "ROLE_USER",
     };
   } catch {
-    return { email: "", firstName: "", lastName: "" };
+    return { email: "", firstName: "", lastName: "", role: "ROLE_USER" };
   }
 }
 
