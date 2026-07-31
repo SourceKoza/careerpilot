@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
-  Briefcase,
   FileText,
   Send,
   Bot,
@@ -26,12 +25,11 @@ import { APP_NAME, ROUTES } from "@/lib/constants";
 import { useSidebarStore } from "@/stores/sidebar.store";
 
 const navItems = [
-  { href: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { href: ROUTES.JOBS, icon: Briefcase, label: "Jobs" },
+  { href: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Overview" },
+  { href: ROUTES.APPLICATIONS, icon: Send, label: "Discovered Jobs" },
   { href: ROUTES.RESUME, icon: FileText, label: "Resume" },
-  { href: ROUTES.RESUME_TAILORING, icon: Wand2, label: "Resume Tailoring" },
-  { href: ROUTES.APPLICATIONS, icon: Send, label: "Applications" },
-  { href: ROUTES.AGENTS, icon: Bot, label: "AI Agents" },
+  { href: ROUTES.RESUME_TAILORING, icon: Wand2, label: "Tailoring" },
+  { href: ROUTES.AGENTS, icon: Bot, label: "Missions" },
   { href: ROUTES.SETTINGS, icon: Settings, label: "Settings" },
 ];
 
@@ -67,7 +65,7 @@ export function DashboardSidebar() {
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href));
+              (item.href !== ROUTES.DASHBOARD && pathname.startsWith(item.href + "/"));
 
             const linkContent = (
               <Link

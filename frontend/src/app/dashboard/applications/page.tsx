@@ -10,12 +10,13 @@ import {
   Star,
   Building2,
   FileText,
-  Check,
   X,
   Pencil,
   Download,
   Loader2,
   Send,
+  Filter,
+  ArrowUpDown,
 } from "lucide-react";
 import type { TailoredResume } from "@/types/mission";
 
@@ -53,6 +54,18 @@ interface Mission {
   status: string;
   applyMode: string;
 }
+
+type StatusFilter = "ALL" | "NEW" | "APPLIED" | "IGNORED" | "REVIEWED" | "REJECTED";
+type SortOption = "score-desc" | "score-asc" | "date-desc" | "date-asc";
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string; color: string }[] = [
+  { value: "ALL", label: "All", color: "bg-primary/10 text-primary border-primary/30" },
+  { value: "NEW", label: "New", color: "bg-blue-500/10 text-blue-400 border-blue-500/30" },
+  { value: "APPLIED", label: "Applied", color: "bg-green-500/10 text-green-400 border-green-500/30" },
+  { value: "IGNORED", label: "Skipped", color: "bg-muted text-muted-foreground border-border" },
+  { value: "REVIEWED", label: "Reviewed", color: "bg-purple-500/10 text-purple-400 border-purple-500/30" },
+  { value: "REJECTED", label: "Rejected", color: "bg-red-500/10 text-red-400 border-red-500/30" },
+];
 
 function getScoreColor(score: number | null): string {
   if (score === null) return "text-muted-foreground";
@@ -103,6 +116,8 @@ export default function ApplicationsPage() {
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
   const [feedbackText, setFeedbackText] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
+  const [sortOption, setSortOption] = useState<SortOption>("score-desc");
 
   useEffect(() => {
     async function loadJobs() {
@@ -119,8 +134,7 @@ export default function ApplicationsPage() {
         setApplyMode(mission.applyMode || "SEMI_AUTO");
 
         const jobsResp = await apiClient.get<ApiResponse<PageResponse<DiscoveredJob>>>(`/api/v1/missions/${mission.id}/jobs?page=0&size=50`);
-        const sorted = jobsResp.data.data.content.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
-        setJobs(sorted);
+        setJobs(jobsResp.data.data.content);
       } catch (e) {
         console.error("Failed to load jobs:", e);
       } finally {
@@ -129,6 +143,29 @@ export default function ApplicationsPage() {
     }
     loadJobs();
   }, []);
+
+  // Filter and sort
+  const filteredJobs = jobs
+    .filter((j) => statusFilter === "ALL" || j.jobStatus === statusFilter)
+    .sort((a, b) => {
+      switch (sortOption) {
+        case "score-desc": return (b.matchScore || 0) - (a.matchScore || 0);
+        case "score-asc": return (a.matchScore || 0) - (b.matchScore || 0);
+        case "date-desc": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "date-asc": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        default: return 0;
+      }
+    });
+
+  // Status counts for filter badges
+  const statusCounts: Record<string, number> = {
+    ALL: jobs.length,
+    NEW: jobs.filter((j) => j.jobStatus === "NEW").length,
+    APPLIED: jobs.filter((j) => j.jobStatus === "APPLIED").length,
+    IGNORED: jobs.filter((j) => j.jobStatus === "IGNORED").length,
+    REVIEWED: jobs.filter((j) => j.jobStatus === "REVIEWED").length,
+    REJECTED: jobs.filter((j) => j.jobStatus === "REJECTED").length,
+  };
 
   const loadTailoredResume = async (jobId: string) => {
     if (!missionId) return;
@@ -252,6 +289,7 @@ export default function ApplicationsPage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Discovered Jobs</h1>
@@ -259,10 +297,10 @@ export default function ApplicationsPage() {
             {jobs.length} jobs from mission: {missionName}
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <div className="text-center px-4 py-2 rounded-xl bg-card border">
             <p className="text-2xl font-bold text-primary">{jobs.length}</p>
-            <p className="text-xs text-muted-foreground">Total Jobs</p>
+            <p className="text-xs text-muted-foreground">Total</p>
           </div>
           <div className="text-center px-4 py-2 rounded-xl bg-card border">
             <p className="text-2xl font-bold text-green-400">{highMatches}</p>
@@ -273,7 +311,7 @@ export default function ApplicationsPage() {
             <p className="text-xs text-muted-foreground">Avg Score</p>
           </div>
           <div className="text-center px-4 py-2 rounded-xl bg-card border">
-            <p className="text-2xl font-bold text-blue-400">{appliedCount}</p>
+            <p className="text-2xl font-bold text-violet-400">{appliedCount}</p>
             <p className="text-xs text-muted-foreground">Applied</p>
           </div>
           <div className="text-center px-3 py-2 rounded-xl bg-card border">
@@ -283,8 +321,54 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
+      {/* Filter & Sort Bar */}
+      <div className="flex flex-wrap items-center gap-3 p-4 rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-2 mr-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Status:</span>
+        </div>
+        {STATUS_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setStatusFilter(opt.value)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              statusFilter === opt.value
+                ? opt.color + " ring-1 ring-current"
+                : "bg-muted/30 text-muted-foreground border-border hover:border-primary/30"
+            }`}
+          >
+            {opt.label}
+            {statusCounts[opt.value] > 0 && (
+              <span className="ml-1.5 opacity-70">({statusCounts[opt.value]})</span>
+            )}
+          </button>
+        ))}
+
+        <div className="ml-auto flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as SortOption)}
+            className="rounded-lg border border-input bg-transparent px-2 py-1.5 text-xs"
+          >
+            <option value="score-desc">Score: High → Low</option>
+            <option value="score-asc">Score: Low → High</option>
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Filtered count */}
+      {statusFilter !== "ALL" && (
+        <p className="text-sm text-muted-foreground">
+          Showing {filteredJobs.length} of {jobs.length} jobs
+        </p>
+      )}
+
+      {/* Job Cards */}
       <div className="grid gap-4">
-        {jobs.map((job) => {
+        {filteredJobs.map((job) => {
           const tailored = tailoredResumes[job.id];
           const isExpanded = expandedJob === job.id;
           const hasTailored = job.tailoredResumeId !== null || tailored !== undefined;
@@ -375,7 +459,7 @@ export default function ApplicationsPage() {
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-sm font-medium hover:bg-blue-500/20 transition-colors"
                         >
                           <FileText className="h-3.5 w-3.5" />
-                          {isExpanded ? "Hide Preview" : "Preview"}
+                          {isExpanded ? "Hide" : "Preview"}
                         </button>
                         <button
                           onClick={() => handleApprove(job.id)}
@@ -455,7 +539,7 @@ export default function ApplicationsPage() {
                       </div>
                     )}
 
-                    {/* Feedback input for regeneration */}
+                    {/* Feedback for regeneration */}
                     {tailored.status === "DRAFT" && (
                       <div className="space-y-2 pt-2 border-t border-border/50">
                         <p className="text-xs text-muted-foreground">Want changes? Describe what to adjust:</p>
@@ -484,6 +568,12 @@ export default function ApplicationsPage() {
             </div>
           );
         })}
+
+        {filteredJobs.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No jobs match the selected filter.</p>
+          </div>
+        )}
       </div>
     </div>
   );
