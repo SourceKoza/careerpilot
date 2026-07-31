@@ -1,10 +1,11 @@
-export default function AgentsPage() {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center space-y-4">
-        <h2 className="text-2xl font-bold">AI Agents</h2>
-        <p className="text-muted-foreground">Coming in Sprint FE-02</p>
-      </div>
-    </div>
-  );
+import type { Metadata } from "next";
+import { MissionsPage } from "@/features/missions/components/missions-page";
+
+export const metadata: Metadata = {
+  title: "AI Missions - CareerPilot AI",
+  description: "Manage your AI search missions",
+};
+
+export default function AgentsRoute() {
+  return <MissionsPage />;
 }
