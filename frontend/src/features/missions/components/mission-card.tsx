@@ -1,10 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Play, Pause, RotateCw, Trash2, Circle, Calendar, Briefcase, Send } from "lucide-react";
+import { Play, Pause, RotateCw, Trash2, Circle, Calendar, Briefcase, Send, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Mission } from "@/types/mission";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface MissionCardProps {
   mission: Mission;
@@ -73,6 +74,17 @@ export function MissionCard({ mission, onView, onPause, onResume, onRunNow, onDe
             </span>
           ))}
         </div>
+
+        {mission.jobsFound > 0 && (
+          <Link
+            href="/dashboard/applications"
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline mb-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Eye className="h-3 w-3" />
+            View {mission.jobsFound} Discovered Jobs →
+          </Link>
+        )}
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{mission.schedule}</span>

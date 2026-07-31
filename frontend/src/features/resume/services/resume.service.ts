@@ -1,95 +1,153 @@
+import { apiClient } from "@/services/api";
 import type { Resume, ResumeVersion, ResumeAnalysis } from "../types";
 
-const mockResume: Resume = {
-  id: "master-1",
-  name: "Master Resume",
-  fileName: "ramesh-pandey-resume.pdf",
-  fileType: "pdf",
-  fileSize: 245760,
-  uploadedAt: "2026-07-20T10:00:00Z",
-  updatedAt: "2026-07-30T15:30:00Z",
-  isMaster: true,
-};
-
-const mockVersions: ResumeVersion[] = [
-  { id: "v1", name: "Master Resume", lastUpdated: "2026-07-30T15:30:00Z", isActive: true },
-  { id: "v2", name: "Java Backend Resume", lastUpdated: "2026-07-28T10:00:00Z", isActive: false },
-  { id: "v3", name: "Spring Boot Resume", lastUpdated: "2026-07-26T14:00:00Z", isActive: false },
-  { id: "v4", name: "AI Engineer Resume", lastUpdated: "2026-07-22T09:00:00Z", isActive: false },
-  { id: "v5", name: "Staff Engineer Resume", lastUpdated: "2026-07-18T11:00:00Z", isActive: false },
-];
-
-const mockAnalysis: ResumeAnalysis = {
-  atsScore: { overall: 89, formatting: 95, keywords: 82, experience: 91 },
-  strengths: ["Java", "Spring Boot", "Kafka", "Redis", "Microservices", "Docker", "PostgreSQL", "System Design"],
-  missingSkills: [
-    { skill: "Terraform", importance: "high" },
-    { skill: "AWS Lambda", importance: "high" },
-    { skill: "Kubernetes", importance: "medium" },
-    { skill: "GraphQL", importance: "medium" },
-    { skill: "Go", importance: "low" },
-  ],
-  suggestions: [
-    { id: "s1", text: "Add quantified achievements (e.g., reduced latency by 40%)", category: "content" },
-    { id: "s2", text: "Mention AI Agent Platform experience", category: "keywords" },
-    { id: "s3", text: "Improve professional summary with target role keywords", category: "content" },
-    { id: "s4", text: "Add a skills section with proficiency indicators", category: "formatting" },
-    { id: "s5", text: "Include links to GitHub and portfolio projects", category: "content" },
-  ],
-  keywordMatch: 78,
-};
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
 }
 
-let currentResume: Resume | null = mockResume;
+interface BackendResumeFile {
+  id: string;
+  name: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  uploadedAt: string;
+  updatedAt: string;
+  isMaster: boolean;
+}
+
+interface BackendAnalysis {
+  atsScore: { overall: number; formatting: number; keywords: number; experience: number };
+  strengths: string[];
+  missingSkills: { skill: string; importance: string }[];
+  suggestions: { id: string; text: string; category: string }[];
+  keywordMatch: number;
+}
+
+interface BackendResumeSummary {
+  id: string;
+  title: string;
+  summary: string | null;
+  targetRole: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BackendVersionResponse {
+  id: string;
+  resumeId: string;
+  versionNumber: number;
+  markdownContent: string | null;
+  jsonContent: string | null;
+  changeDescription: string | null;
+  createdAt: string;
+}
+
+function mapResumeFile(b: BackendResumeFile): Resume {
+  return {
+    id: b.id,
+    name: b.name,
+    fileName: b.fileName,
+    fileType: (b.fileType === "docx" ? "docx" : "pdf") as "pdf" | "docx",
+    fileSize: b.fileSize,
+    uploadedAt: b.uploadedAt,
+    updatedAt: b.updatedAt,
+    isMaster: b.isMaster,
+  };
+}
 
 export const resumeIntelligenceService = {
   async getResume(): Promise<Resume | null> {
-    await delay(500);
-    return currentResume;
+    try {
+      const response = await apiClient.get<ApiResponse<BackendResumeFile>>("/api/v1/resume-intelligence/current");
+      return mapResumeFile(response.data.data);
+    } catch {
+      return null;
+    }
   },
 
   async uploadResume(file: File): Promise<Resume> {
-    await delay(1500);
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    currentResume = {
-      id: "master-" + Date.now(),
-      name: "Master Resume",
-      fileName: file.name,
-      fileType: ext === "docx" ? "docx" : "pdf",
-      fileSize: file.size,
-      uploadedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isMaster: true,
-    };
-    return currentResume;
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post<ApiResponse<BackendResumeFile>>(
+      "/api/v1/resume-intelligence/upload",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return mapResumeFile(response.data.data);
   },
 
   async replaceResume(file: File): Promise<Resume> {
-    return this.uploadResume(file);
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post<ApiResponse<BackendResumeFile>>(
+      "/api/v1/resume-intelligence/replace",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return mapResumeFile(response.data.data);
   },
 
   async analyzeResume(): Promise<ResumeAnalysis> {
-    await delay(2000);
-    return mockAnalysis;
+    const response = await apiClient.post<ApiResponse<BackendAnalysis>>("/api/v1/resume-intelligence/analyze");
+    const data = response.data.data;
+    return {
+      atsScore: data.atsScore,
+      strengths: data.strengths,
+      missingSkills: data.missingSkills.map((s) => ({
+        skill: s.skill,
+        importance: s.importance as "high" | "medium" | "low",
+      })),
+      suggestions: data.suggestions.map((s) => ({
+        id: s.id,
+        text: s.text,
+        category: s.category as "content" | "formatting" | "keywords",
+      })),
+      keywordMatch: data.keywordMatch,
+    };
   },
 
   async getResumeVersions(): Promise<ResumeVersion[]> {
-    await delay(400);
-    return [...mockVersions];
+    try {
+      // Use the existing resumes list API and map to versions
+      const response = await apiClient.get<ApiResponse<{ content: BackendResumeSummary[] }>>("/api/v1/resumes?page=0&size=10");
+      const resumes = response.data.data.content;
+      return resumes.map((r, idx) => ({
+        id: r.id,
+        name: r.title,
+        lastUpdated: r.updatedAt,
+        isActive: idx === 0,
+      }));
+    } catch {
+      return [];
+    }
   },
 
-  async generateResumeVersion(_targetRole: string): Promise<ResumeVersion> {
-    await delay(1500);
-    const newVersion: ResumeVersion = {
-      id: "v" + Date.now(),
-      name: `${_targetRole} Resume`,
-      lastUpdated: new Date().toISOString(),
+  async generateResumeVersion(targetRole: string): Promise<ResumeVersion> {
+    // Create a new resume record for this version
+    const response = await apiClient.post<ApiResponse<{ id: string; title: string; createdAt: string; updatedAt: string }>>(
+      "/api/v1/resumes",
+      {
+        title: `${targetRole} Resume`,
+        summary: `Tailored resume for ${targetRole} role`,
+        targetRole: targetRole,
+        experiences: [],
+        educations: [],
+        skills: [],
+        certifications: [],
+        projects: [],
+        languages: [],
+      }
+    );
+    const data = response.data.data;
+    return {
+      id: data.id,
+      name: `${targetRole} Resume`,
+      lastUpdated: data.updatedAt || data.createdAt,
       isActive: false,
     };
-    mockVersions.push(newVersion);
-    return newVersion;
   },
 };

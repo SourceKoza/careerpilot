@@ -1,177 +1,221 @@
+import { apiClient } from "./api";
 import type { Mission, MissionProgress, MissionTimelineItem, CreateMissionData } from "@/types/mission";
 
-let mockMissions: Mission[] = [
-  {
-    id: "1",
-    name: "Senior Frontend – Remote US",
-    status: "active",
-    keywords: "React, Next.js, TypeScript",
-    preferredTitle: "Senior Frontend Engineer",
-    experienceLevel: "Senior",
-    location: "United States",
-    remote: true,
-    hybrid: false,
-    salaryMin: 150000,
-    currency: "USD",
-    employmentType: "Full-time",
-    platforms: ["LinkedIn", "Indeed", "Wellfound"],
-    resumeId: "1",
-    resumeTitle: "Senior Frontend Engineer",
-    schedule: "Daily",
-    timezone: "America/New_York",
-    createdAt: "2026-07-25T10:00:00Z",
-    lastRun: "2026-07-31T06:00:00Z",
-    nextRun: "2026-08-01T06:00:00Z",
-    jobsFound: 142,
-    applicationsSubmitted: 34,
-    successRate: 24,
-  },
-  {
-    id: "2",
-    name: "Java Backend – London",
-    status: "paused",
-    keywords: "Java, Spring Boot, Microservices",
-    preferredTitle: "Backend Engineer",
-    experienceLevel: "Senior",
-    location: "London, UK",
-    remote: false,
-    hybrid: true,
-    salaryMin: 90000,
-    currency: "GBP",
-    employmentType: "Full-time",
-    platforms: ["LinkedIn", "Indeed"],
-    resumeId: "3",
-    resumeTitle: "Backend Java Engineer",
-    schedule: "Weekly",
-    timezone: "Europe/London",
-    createdAt: "2026-07-20T14:00:00Z",
-    lastRun: "2026-07-28T08:00:00Z",
-    nextRun: null,
-    jobsFound: 67,
-    applicationsSubmitted: 12,
-    successRate: 18,
-  },
-  {
-    id: "3",
-    name: "Full Stack – Remote Anywhere",
-    status: "completed",
-    keywords: "Full Stack, Node.js, React",
-    preferredTitle: "Full Stack Developer",
-    experienceLevel: "Mid",
-    location: "Remote",
-    remote: true,
-    hybrid: false,
-    salaryMin: 100000,
-    currency: "USD",
-    employmentType: "Full-time",
-    platforms: ["LinkedIn", "Wellfound", "Company Sites"],
-    resumeId: "2",
-    resumeTitle: "Full Stack Developer",
-    schedule: "Run Once",
-    timezone: "UTC",
-    createdAt: "2026-07-15T09:00:00Z",
-    lastRun: "2026-07-15T09:05:00Z",
-    nextRun: null,
-    jobsFound: 89,
-    applicationsSubmitted: 21,
-    successRate: 28,
-  },
-];
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  timestamp: string;
+}
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
+interface BackendMission {
+  id: string;
+  userId: string;
+  name: string;
+  keywords: string;
+  preferredTitle: string | null;
+  experienceLevel: string | null;
+  location: string | null;
+  remote: boolean;
+  hybrid: boolean;
+  salaryMin: number | null;
+  currency: string | null;
+  employmentType: string | null;
+  platforms: string[];
+  resumeId: string | null;
+  schedule: string | null;
+  timezone: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BackendExecution {
+  id: string;
+  missionId: string;
+  status: string;
+  startedAt: string;
+  completedAt: string | null;
+  durationMs: number | null;
+  jobsFound: number;
+  contactsFound: number;
+  errorMessage: string | null;
+}
+
+interface BackendEvent {
+  id: string;
+  missionId: string;
+  executionId: string | null;
+  eventType: string;
+  message: string;
+  eventTime: string;
+}
+
+interface BackendLog {
+  id: string;
+  executionId: string;
+  level: string;
+  message: string;
+  logTime: string;
+}
+
+function mapStatus(backendStatus: string): Mission["status"] {
+  switch (backendStatus) {
+    case "CREATED": return "scheduled";
+    case "RUNNING": return "active";
+    case "PAUSED": return "paused";
+    case "COMPLETED": return "completed";
+    case "FAILED": return "failed";
+    case "CANCELLED": return "paused";
+    default: return "scheduled";
+  }
+}
+
+function mapMission(b: BackendMission): Mission {
+  return {
+    id: b.id,
+    name: b.name,
+    status: mapStatus(b.status),
+    keywords: b.keywords,
+    preferredTitle: b.preferredTitle || "",
+    experienceLevel: b.experienceLevel || "",
+    location: b.location || "",
+    remote: b.remote,
+    hybrid: b.hybrid,
+    salaryMin: b.salaryMin,
+    currency: b.currency || "USD",
+    employmentType: b.employmentType || "",
+    platforms: b.platforms || [],
+    resumeId: b.resumeId,
+    resumeTitle: null,
+    schedule: b.schedule || "",
+    timezone: b.timezone || "UTC",
+    createdAt: b.createdAt,
+    lastRun: b.updatedAt,
+    nextRun: null,
+    jobsFound: 0,
+    applicationsSubmitted: 0,
+    successRate: 0,
+  };
 }
 
 export const missionService = {
   async listMissions(): Promise<Mission[]> {
-    await delay(500);
-    return [...mockMissions];
+    const response = await apiClient.get<ApiResponse<PageResponse<BackendMission>>>("/api/v1/missions");
+    const page = response.data.data;
+    const missions = page.content.map(mapMission);
+
+    // Enrich with execution data (jobsFound)
+    for (const mission of missions) {
+      try {
+        const execResp = await apiClient.get<ApiResponse<PageResponse<BackendExecution>>>(
+          `/api/v1/missions/${mission.id}/executions?page=0&size=1`
+        );
+        const execs = execResp.data.data.content;
+        if (execs.length > 0) {
+          mission.jobsFound = execs[0].jobsFound;
+          mission.lastRun = execs[0].startedAt;
+        }
+      } catch {
+        // ignore - mission may not have executions yet
+      }
+    }
+
+    return missions;
   },
 
   async getMission(id: string): Promise<Mission | undefined> {
-    await delay(300);
-    return mockMissions.find((m) => m.id === id);
+    try {
+      const response = await apiClient.get<ApiResponse<BackendMission>>(`/api/v1/missions/${id}`);
+      return mapMission(response.data.data);
+    } catch {
+      return undefined;
+    }
   },
 
   async createMission(data: CreateMissionData): Promise<Mission> {
-    await delay(1000);
-    const mission: Mission = {
-      id: String(Date.now()),
-      ...data,
-      resumeTitle: data.resumeId ? "Selected Resume" : null,
-      status: "scheduled",
-      createdAt: new Date().toISOString(),
-      lastRun: null,
-      nextRun: new Date(Date.now() + 3600000).toISOString(),
-      jobsFound: 0,
-      applicationsSubmitted: 0,
-      successRate: 0,
+    const payload = {
+      name: data.name,
+      keywords: data.keywords,
+      preferredTitle: data.preferredTitle,
+      experienceLevel: data.experienceLevel,
+      location: data.location,
+      remote: data.remote,
+      hybrid: data.hybrid,
+      salaryMin: data.salaryMin,
+      currency: data.currency,
+      employmentType: data.employmentType,
+      platforms: data.platforms,
+      resumeId: data.resumeId,
+      schedule: data.schedule,
+      timezone: data.timezone,
     };
-    mockMissions = [mission, ...mockMissions];
-    return mission;
+    const response = await apiClient.post<ApiResponse<BackendMission>>("/api/v1/missions", payload);
+    return mapMission(response.data.data);
   },
 
   async pauseMission(id: string): Promise<void> {
-    await delay(300);
-    mockMissions = mockMissions.map((m) =>
-      m.id === id ? { ...m, status: "paused" as const, nextRun: null } : m
-    );
+    await apiClient.post(`/api/v1/missions/${id}/pause`);
   },
 
   async resumeMission(id: string): Promise<void> {
-    await delay(300);
-    mockMissions = mockMissions.map((m) =>
-      m.id === id ? { ...m, status: "active" as const, nextRun: new Date(Date.now() + 3600000).toISOString() } : m
-    );
+    await apiClient.post(`/api/v1/missions/${id}/resume`);
   },
 
   async runNow(id: string): Promise<void> {
-    await delay(500);
-    mockMissions = mockMissions.map((m) =>
-      m.id === id ? { ...m, status: "active" as const, lastRun: new Date().toISOString() } : m
-    );
+    await apiClient.post(`/api/v1/missions/${id}/start`, {});
   },
 
-  async deleteMission(id: string): Promise<void> {
-    await delay(400);
-    mockMissions = mockMissions.filter((m) => m.id !== id);
+  async deleteMission(_id: string): Promise<void> {
+    // Delete not implemented in Sprint-15 backend; no-op for now
   },
 
   async getMissionProgress(id: string): Promise<MissionProgress> {
-    await delay(300);
-    const mission = mockMissions.find((m) => m.id === id);
-    if (!mission) {
+    // Derived from executions — for now return a simple summary
+    try {
+      const response = await apiClient.get<ApiResponse<PageResponse<BackendExecution>>>(
+        `/api/v1/missions/${id}/executions?page=0&size=1`
+      );
+      const executions = response.data.data.content;
+      if (executions.length === 0) {
+        return { overall: 0, currentActivity: "No executions yet", platforms: [] };
+      }
+      const latest = executions[0];
+      const isRunning = latest.status === "RUNNING";
+      return {
+        overall: latest.status === "COMPLETED" ? 100 : isRunning ? 50 : 0,
+        currentActivity: isRunning ? "Searching platforms..." : latest.status === "COMPLETED" ? "Completed" : "Idle",
+        platforms: [],
+      };
+    } catch {
       return { overall: 0, currentActivity: "", platforms: [] };
     }
-    return {
-      overall: mission.status === "completed" ? 100 : 74,
-      currentActivity: mission.status === "active" ? "Analyzing LinkedIn Results..." : "Mission paused",
-      platforms: mission.platforms.map((p, i) => ({
-        name: p,
-        progress: mission.status === "completed" ? 100 : Math.min(100, 50 + i * 15),
-        jobsFound: Math.floor(mission.jobsFound / mission.platforms.length),
-      })),
-    };
   },
 
   async getMissionTimeline(id: string): Promise<MissionTimelineItem[]> {
-    await delay(300);
-    const mission = mockMissions.find((m) => m.id === id);
-    if (!mission) return [];
-    const items: MissionTimelineItem[] = [
-      { id: "t1", event: "Mission Created", timestamp: mission.createdAt, status: "completed" },
-    ];
-    if (mission.lastRun) {
-      items.push({ id: "t2", event: "Mission Started", timestamp: mission.lastRun, status: "completed" });
-      mission.platforms.forEach((p, i) => {
-        items.push({ id: `t3-${i}`, event: `Searching ${p}`, timestamp: mission.lastRun!, status: mission.status === "completed" ? "completed" : i < 2 ? "completed" : "active" });
-      });
-      if (mission.status === "completed") {
-        items.push({ id: "t4", event: "Resume Tailoring", timestamp: mission.lastRun, status: "completed" });
-        items.push({ id: "t5", event: `${mission.applicationsSubmitted} Applications Submitted`, timestamp: mission.lastRun, status: "completed" });
-        items.push({ id: "t6", event: "Mission Completed", timestamp: mission.lastRun, status: "completed" });
-      }
+    try {
+      const response = await apiClient.get<ApiResponse<PageResponse<BackendEvent>>>(
+        `/api/v1/missions/${id}/events?page=0&size=50`
+      );
+      const events = response.data.data.content;
+      return events.map((e) => ({
+        id: e.id,
+        event: e.message,
+        timestamp: e.eventTime,
+        status: "completed" as const,
+      }));
+    } catch {
+      return [];
     }
-    return items;
   },
 };
