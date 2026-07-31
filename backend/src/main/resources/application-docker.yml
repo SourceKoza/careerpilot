@@ -1,20 +1,65 @@
 # =========================
-# CareerPilot AI - Docker Profile
+# CareerPilot AI - Docker Development Profile
+# Used when running inside Docker Compose
 # =========================
 
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:careerpilot}
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB:careerpilot}
     username: ${POSTGRES_USER:careerpilot}
     password: ${POSTGRES_PASSWORD:careerpilot_secret}
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  devtools:
+    restart:
+      enabled: true
+      poll-interval: 2s
+      quiet-period: 1s
+      additional-paths:
+        - /app/src/main/java
+        - /app/src/main/resources
 
 logging:
   level:
-    com.sourcekoza.careerpilot: INFO
-    org.springframework.web: WARN
+    com.sourcekoza.careerpilot: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: DEBUG
+
+# Ollama (running locally on host)
+spring.ai:
+  ollama:
+    base-url: http://host.docker.internal:11434
+    chat:
+      model: qwen2.5:7b
+      options:
+        temperature: 0.3
+        num-predict: 2048
+
+# Email (SMTP)
+spring.mail:
+  host: ${MAIL_HOST:smtp.gmail.com}
+  port: ${MAIL_PORT:587}
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
+  properties:
+    mail:
+      smtp:
+        auth: true
+        starttls:
+          enabled: true
+
+app.email:
+  from: ${MAIL_FROM:careerpilot@sourcekoza.com}
+  enabled: ${EMAIL_ENABLED:false}
+
+# Actuator
+management:
+  endpoint:
+    health:
+      show-details: always

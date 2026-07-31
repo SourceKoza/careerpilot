@@ -19,11 +19,10 @@ import { cn } from "@/lib/utils";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 
 const navItems = [
-  { href: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Dashboard" },
-  { href: ROUTES.JOBS, icon: Briefcase, label: "Jobs" },
+  { href: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Overview" },
+  { href: ROUTES.APPLICATIONS, icon: Send, label: "Discovered Jobs" },
   { href: ROUTES.RESUME, icon: FileText, label: "Resume" },
-  { href: ROUTES.APPLICATIONS, icon: Send, label: "Applications" },
-  { href: ROUTES.AGENTS, icon: Bot, label: "AI Agents" },
+  { href: ROUTES.AGENTS, icon: Bot, label: "Missions" },
   { href: ROUTES.SETTINGS, icon: Settings, label: "Settings" },
 ];
 

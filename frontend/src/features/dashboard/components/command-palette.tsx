@@ -27,12 +27,12 @@ interface CommandItem {
 
 const commands: CommandItem[] = [
   { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", description: "Go to dashboard", href: ROUTES.DASHBOARD, category: "Pages" },
-  { id: "jobs", icon: Briefcase, label: "Jobs", description: "Browse job listings", href: ROUTES.JOBS, category: "Pages" },
+  { id: "jobs", icon: Briefcase, label: "Jobs", description: "Browse job listings", href: ROUTES.APPLICATIONS, category: "Pages" },
   { id: "resume", icon: FileText, label: "Resume", description: "Manage your resume", href: ROUTES.RESUME, category: "Pages" },
   { id: "applications", icon: Send, label: "Applications", description: "Track applications", href: ROUTES.APPLICATIONS, category: "Pages" },
   { id: "agents", icon: Bot, label: "AI Agents", description: "Manage AI agents", href: ROUTES.AGENTS, category: "Pages" },
   { id: "settings", icon: Settings, label: "Settings", description: "Account settings", href: ROUTES.SETTINGS, category: "Pages" },
-  { id: "search-jobs", icon: Search, label: "Search Jobs", description: "Find new opportunities", href: ROUTES.JOBS, category: "Actions" },
+  { id: "search-jobs", icon: Search, label: "Search Jobs", description: "Find new opportunities", href: ROUTES.APPLICATIONS, category: "Actions" },
   { id: "upload-resume", icon: FileText, label: "Upload Resume", description: "Import your resume", href: ROUTES.RESUME, category: "Actions" },
   { id: "launch-agent", icon: Bot, label: "Launch AI Agent", description: "Start job search automation", href: ROUTES.AGENTS, category: "Actions" },
 ];

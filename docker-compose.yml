@@ -5,6 +5,43 @@
 
 services:
 
+  # --- Spring Boot Application (Dev with Hot Reload) ---
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: careerpilot-app
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    volumes:
+      # Mount source code for hot reload
+      - ./backend/src:/app/src
+      - ./backend/pom.xml:/app/pom.xml
+      # Named volume for Maven cache (avoids re-downloading deps)
+      - careerpilot-maven-cache:/root/.m2
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      POSTGRES_DB: ${POSTGRES_DB:-careerpilot}
+      POSTGRES_USER: ${POSTGRES_USER:-careerpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-careerpilot_secret}
+      JWT_SECRET: ${JWT_SECRET:-404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - careerpilot-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
   # --- PostgreSQL ---
   postgres:
     image: postgres:16-alpine
@@ -45,56 +82,46 @@ services:
       retries: 5
       start_period: 5s
 
-  # --- MinIO (S3-compatible object storage) ---
-  minio:
-    image: minio/minio:latest
-    container_name: careerpilot-minio
+  # --- Next.js Frontend (Dev with Hot Reload) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: careerpilot-frontend
     restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/next.config.ts:/app/next.config.ts
+      - ./frontend/tailwind.config.ts:/app/tailwind.config.ts
+      - ./frontend/postcss.config.mjs:/app/postcss.config.mjs
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      # Prevent node_modules from being overwritten by host mount
+      - careerpilot-frontend-node-modules:/app/node_modules
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-careerpilot}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-careerpilot_secret}
-    ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
-    volumes:
-      - careerpilot-minio-data:/data
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      - app
     networks:
       - careerpilot-network
-    command: server /data --console-address ":9001"
-    healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
-  # --- Ollama (Local LLM inference) ---
-  ollama:
-    image: ollama/ollama:latest
-    container_name: careerpilot-ollama
-    restart: unless-stopped
-    ports:
-      - "${OLLAMA_PORT:-11434}:11434"
-    volumes:
-      - careerpilot-ollama-data:/root/.ollama
-    networks:
-      - careerpilot-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:11434/api/tags || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
+  # NOTE: Ollama and MinIO run locally on the host (not in Docker)
+  # Ollama: http://host.docker.internal:11434
+  # MinIO: http://host.docker.internal:9000
 
 volumes:
   careerpilot-postgres-data:
     name: careerpilot-postgres-data
   careerpilot-redis-data:
     name: careerpilot-redis-data
-  careerpilot-minio-data:
-    name: careerpilot-minio-data
-  careerpilot-ollama-data:
-    name: careerpilot-ollama-data
+  careerpilot-maven-cache:
+    name: careerpilot-maven-cache
+  careerpilot-frontend-node-modules:
+    name: careerpilot-frontend-node-modules
 
 networks:
   careerpilot-network:
