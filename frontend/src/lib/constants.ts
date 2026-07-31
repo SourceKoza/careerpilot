@@ -11,6 +11,7 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",
   JOBS: "/dashboard/jobs",
   RESUME: "/dashboard/resume",
+  RESUME_TAILORING: "/dashboard/resume-tailoring",
   APPLICATIONS: "/dashboard/applications",
   AGENTS: "/dashboard/agents",
   SETTINGS: "/dashboard/settings",
