@@ -33,7 +33,7 @@ Docker Compose configuration including:
 
 ---
 
-## Acceptance Criteria
+## Acceptance Criteria. 
 
 Running:
 
