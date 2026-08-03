@@ -1,0 +1,28 @@
+# Build output
+backend/target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Node modules (frontend)
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Environment files (use docker-compose env instead)
+.env

@@ -1,5 +1,6 @@
 package com.sourcekoza.careerpilot.exception;
 
+import com.sourcekoza.careerpilot.browser.exception.BrowserException;
 import com.sourcekoza.careerpilot.common.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -64,6 +65,24 @@ public class GlobalExceptionHandler {
                 null
         );
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
+    }
+
+    @ExceptionHandler(BrowserException.class)
+    public ResponseEntity<ErrorResponse> handleBrowserException(
+            BrowserException ex, HttpServletRequest request) {
+
+        log.error("Browser automation error: {}", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                Instant.now(),
+                resolveTraceId(request),
+                null
+        );
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
     }
 
     @ExceptionHandler(BadCredentialsException.class)

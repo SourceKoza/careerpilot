@@ -1,0 +1,36 @@
+# =========================
+# CareerPilot AI - Development Dockerfile
+# Hot reload with Spring Boot DevTools
+# =========================
+
+FROM eclipse-temurin:21-jdk
+
+# Install Maven
+ARG MAVEN_VERSION=3.9.9
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+      | tar -xz -C /opt && \
+    ln -s /opt/apache-maven-${MAVEN_VERSION}/bin/mvn /usr/local/bin/mvn && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ENV MAVEN_HOME=/opt/apache-maven-${MAVEN_VERSION}
+
+WORKDIR /app
+
+# Copy only pom.xml first to leverage Docker layer caching for dependencies
+COPY pom.xml .
+COPY .mvn .mvn
+COPY mvnw .
+
+# Download dependencies (cached unless pom.xml changes)
+RUN mvn dependency:go-offline -B
+
+# Expose application port
+EXPOSE 8080
+
+# Run Spring Boot with DevTools enabled via Maven
+# -Dspring-boot.run.jvmArguments enables remote DevTools polling
+CMD ["mvn", "spring-boot:run", \
+     "-Dspring-boot.run.profiles=docker", \
+     "-Dspring-boot.run.jvmArguments=-Dspring.devtools.restart.enabled=true -Dspring.devtools.restart.poll-interval=2s -Dspring.devtools.restart.quiet-period=1s"]
