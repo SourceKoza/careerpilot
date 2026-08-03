@@ -63,7 +63,8 @@ public class AuthenticationService {
         userRepository.save(user);
         log.info("User registered successfully: {}", request.email());
 
-        String token = jwtService.generateToken(user.getEmail());
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().name(),
+                user.getFirstName(), user.getLastName());
         return new AuthResponse(token);
     }
 
@@ -78,9 +79,12 @@ public class AuthenticationService {
                 new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new RuntimeException("User not found"));
         log.info("User logged in successfully: {}", request.email());
 
-        String token = jwtService.generateToken(request.email());
+        String token = jwtService.generateToken(user.getEmail(), user.getRole().name(),
+                user.getFirstName(), user.getLastName());
         return new AuthResponse(token);
     }
 }

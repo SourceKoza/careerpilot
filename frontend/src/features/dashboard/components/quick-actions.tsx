@@ -19,7 +19,7 @@ const actions: QuickAction[] = [
     icon: Search,
     label: "Search Jobs",
     description: "Find matching roles",
-    href: ROUTES.JOBS,
+    href: ROUTES.APPLICATIONS,
     color: "from-blue-500/20 to-blue-600/5",
   },
   {

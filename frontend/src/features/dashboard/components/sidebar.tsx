@@ -13,6 +13,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Wand2,
+  Shield,
 } from "lucide-react";
 import {
   Tooltip,
@@ -23,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { useSidebarStore } from "@/stores/sidebar.store";
+import { useAuthStore } from "@/stores/auth.store";
 
 const navItems = [
   { href: ROUTES.DASHBOARD, icon: LayoutDashboard, label: "Overview" },
@@ -36,6 +38,8 @@ const navItems = [
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { collapsed, toggle } = useSidebarStore();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === "ROLE_ADMIN";
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -103,6 +107,33 @@ export function DashboardSidebar() {
 
             return <div key={item.href}>{linkContent}</div>;
           })}
+
+          {/* Admin link - only for ROLE_ADMIN */}
+          {isAdmin && (
+            <div className="mt-4 pt-4 border-t border-border">
+              {collapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="/admin"
+                      className="flex items-center justify-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Shield className="h-4 w-4" />
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Admin Panel</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>Admin Panel</span>
+                </Link>
+              )}
+            </div>
+          )}
         </nav>
 
         {/* Collapse toggle */}
